@@ -19,9 +19,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Trusted publishing needs npm 11.5.1+ and Node 22.14+. Node 24
+          # carries npm 11, and npm is pinned below anyway so a future npm
+          # major cannot change how a release behaves without us choosing it.
+          node-version: 24
           cache: npm
           registry-url: https://registry.npmjs.org
+
+      - run: npm install -g npm@^11.5.1
 
       - name: The tag matches the version in package.json
         run: |
