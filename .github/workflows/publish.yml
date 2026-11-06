@@ -37,8 +37,15 @@ jobs:
             exit 1
           fi
 
-      - run: npm ci
+      # --ignore-scripts because id-token: write hands the OIDC credential to
+      # every step in this job, dependency install scripts included. Nothing
+      # here needs them: the package's own prepublishOnly still runs, because
+      # the flag applies to this command and not to npm publish below.
+      - run: npm ci --ignore-scripts
       - run: npm run typecheck
+
+      # No token. The OIDC identity of this workflow is the credential, and
+      # npm checks it against the trusted publisher configured on the package:
+      # this repository, this filename. registry-url above still has to be set
+      # so npm knows which registry to exchange it with.
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

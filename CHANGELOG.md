@@ -4,7 +4,13 @@ This package runs on carriers' own websites, so a breaking change here breaks
 someone else's site. Versions follow semver strictly, and anything that changes
 what an existing call does gets a major.
 
-## Unreleased
+## 0.1.1
+
+No change to the package. Published to validate the trusted publisher, which
+replaces the publishing token: releases are now authenticated by the identity
+of the workflow that builds them, so there is no secret to leak or rotate.
+
+## 0.1.0
 
 ### Added
 - `@fleegital/web/form`: `ApplicationForm` for a form that works out of the box,
