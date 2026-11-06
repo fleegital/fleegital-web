@@ -1,7 +1,7 @@
 {
   "name": "@fleegital/web",
   "version": "0.1.0",
-  "description": "The driver application form for carriers running Fleegital.",
+  "description": "The driver application form and website analytics for carriers running Fleegital.",
   "license": "MIT",
   "author": "Fleegital",
   "homepage": "https://github.com/fleegital/fleegital-web#readme",
@@ -12,14 +12,30 @@
   "bugs": {
     "url": "https://github.com/fleegital/fleegital-web/issues"
   },
-  "keywords": ["fleegital", "trucking", "recruiting", "cdl", "application-form"],
+  "keywords": [
+    "fleegital",
+    "trucking",
+    "recruiting",
+    "cdl",
+    "application-form",
+    "analytics"
+  ],
   "type": "module",
   "sideEffects": false,
-  "files": ["dist", "README.md", "CHANGELOG.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "exports": {
     "./form": {
       "types": "./dist/form/index.d.ts",
       "import": "./dist/form/index.js"
+    },
+    "./analytics": {
+      "types": "./dist/analytics/index.d.ts",
+      "import": "./dist/analytics/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -36,11 +52,15 @@
     "react": ">=18"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true }
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
     "typescript": "^5.8.3"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }

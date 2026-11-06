@@ -61,6 +61,73 @@ if (f.state === "sent") return <p>{f.message}</p>;
 colour and the logo — all from your Fleegital settings, so changing them there
 changes the form without a deploy.
 
+## Website analytics
+
+```bash
+npm install @fleegital/web
+```
+
+```ts
+import { createAnalytics } from "@fleegital/web/analytics";
+
+const analytics = createAnalytics({ publishableKey: "pk_live_…" });
+```
+
+That is the whole setup. It records a page view on load and on every SPA route
+change, batches events, and sends what is queued when the tab is hidden.
+
+| | |
+|---|---|
+| `analytics.pageView(path?)` | Record a page view yourself (use with `autoPageViews: false`). |
+| `analytics.track(event, path?)` | `page_view`, `form_view`, `form_start`, `form_submit`. |
+| `analytics.flush()` | Send what is queued now. |
+| `analytics.stop()` | Stop listening, unwrap `history`, send what is left. |
+
+Options: `autoPageViews` (default `true`) and `flushInterval` in milliseconds
+(default `3000`), plus `publishableKey` and `origin`.
+
+### The application funnel
+
+Hand the analytics object to the form and the three funnel steps are recorded
+for you — the form became usable, the applicant typed something, the
+application was accepted:
+
+```tsx
+<ApplicationForm publishableKey="pk_live_…" analytics={analytics} />
+```
+
+Or with your own markup:
+
+```ts
+const f = useApplicationForm({ publishableKey: "pk_live_…", analytics });
+```
+
+Without it the page view is still recorded, but the funnel columns in Fleegital
+stay empty — and a page view is not an attempt.
+
+### What it collects
+
+An anonymous id for the browser, an id for the visit, the path, the referring
+host when it is somebody else's, a device class of `mobile`, `tablet` or
+`desktop`, and the `utm_*` tags the visit arrived on.
+
+It sets **no cookie**, loads **no third-party script**, sends nothing to anyone
+but your own Fleegital endpoint, and collects nothing a person typed. The ids
+live in `localStorage` and `sessionStorage` and never leave the browser except
+in these events. Where storage is blocked, nothing is recorded and nothing
+breaks.
+
+The campaign is remembered for the whole visit, not read fresh on each page: a
+visitor who arrives from an ad and reads three pages counts as three pages for
+that campaign.
+
+### It will not break your site
+
+No call throws, no failure is retried, and nothing is logged to the console. A
+page view is not worth an error on a carrier's careers page. On a browser
+without `fetch` `keepalive` (Firefox before 133) a last unsent batch can be lost
+when the tab closes; everything before it is already gone.
+
 ## What it does that a plain `fetch` would not
 
 - **Deduplicates across your whole company.** A driver who already applied, in

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { useApplicationForm } from "./useApplicationForm.js";
-import type { ApplicationValues, FleegitalOptions } from "../shared/client.js";
+import type { ApplicationValues, EventSink, FleegitalOptions } from "../shared/client.js";
 
 /** Fields a carrier can ask for, in the order they are shown. */
 export type FieldName = keyof ApplicationValues;
@@ -22,6 +22,8 @@ const DEFAULT_LABELS: Record<FieldName, string> = {
 const REQUIRED: FieldName[] = ["first_name", "phone"];
 
 export interface ApplicationFormProps extends FleegitalOptions {
+  /** Pass what `createAnalytics()` returned to record the funnel steps. */
+  analytics?: EventSink;
   fields?: FieldName[];
   labels?: Partial<Record<FieldName, string>>;
   /** Called once the server has accepted the submission. */
@@ -47,8 +49,8 @@ const HIDDEN: CSSProperties = {
 };
 
 export function ApplicationForm(props: ApplicationFormProps) {
-  const { publishableKey, origin, fields = DEFAULT_FIELDS, labels, onSuccess, onError, className, submitLabel } = props;
-  const f = useApplicationForm({ publishableKey, origin });
+  const { publishableKey, origin, analytics, fields = DEFAULT_FIELDS, labels, onSuccess, onError, className, submitLabel } = props;
+  const f = useApplicationForm({ publishableKey, origin, analytics });
 
   if (f.state === "loading") return <p>Loading…</p>;
   if (f.state === "error" && !f.config) return <p>{f.error ?? "This form is unavailable."}</p>;

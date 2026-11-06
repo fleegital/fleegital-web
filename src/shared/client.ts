@@ -140,3 +140,75 @@ export async function submitApplication(args: SubmitArgs): Promise<SubmitResult>
   const body = (await res.json()) as { message?: string };
   return { message: body.message ?? "Thank you. Your application was received." };
 }
+
+/* ------------------------------------------------------------------ *
+ * Analytics transport
+ * ------------------------------------------------------------------ */
+
+/** The four names the server counts. A fifth would be stored and never read. */
+export const ANALYTICS_EVENTS = ["page_view", "form_view", "form_start", "form_submit"] as const;
+export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[number];
+
+/**
+ * Somewhere to report a funnel event. `Analytics` satisfies it structurally,
+ * so the form can report into it without importing the analytics module —
+ * a carrier who only installs the form ships none of the analytics code.
+ */
+export interface EventSink {
+  track: (event: AnalyticsEventName, path?: string) => void;
+}
+
+/** One event, in the shape the endpoint reads. */
+export interface AnalyticsEvent {
+  event_name: AnalyticsEventName;
+  path: string;
+  visitor_id: string;
+  session_id?: string | undefined;
+  referrer_host?: string | undefined;
+  device?: string | undefined;
+  utm?: Record<string, string> | undefined;
+  /** ISO 8601. The server clamps it into the last two days. */
+  occurred_at: string;
+}
+
+/** The server's answer, which says nothing a caller can act on. */
+export interface SendEventsResult {
+  accepted: number;
+  dropped: number;
+}
+
+/** The endpoint accepts at most this many events in one request. */
+export const MAX_BATCH = 50;
+
+const analyticsEndpoint = (origin?: string) =>
+  `${(origin ?? DEFAULT_ORIGIN).replace(/\/+$/, "")}/api/analytics`;
+
+/**
+ * Sends a batch. Never throws and never rejects: a page view is not worth
+ * breaking, retrying or logging on someone else's website, and the endpoint
+ * answers 202 for every outcome anyway, so there is nothing to branch on.
+ *
+ * `keepalive` lets the request outlive the page, which is the whole point
+ * when a tab is closing. sendBeacon would be the other way, but it cannot
+ * set the key header, and moving the key into the URL to suit it would put
+ * it in every proxy log for no gain.
+ */
+export async function sendEvents(
+  options: FleegitalOptions,
+  events: AnalyticsEvent[],
+  keepalive = false,
+): Promise<SendEventsResult | undefined> {
+  if (events.length === 0) return { accepted: 0, dropped: 0 };
+  try {
+    const res = await fetch(analyticsEndpoint(options.origin), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-fleegital-key": options.publishableKey },
+      body: JSON.stringify({ events: events.slice(0, MAX_BATCH) }),
+      keepalive,
+    });
+    const body = (await res.json()) as Partial<SendEventsResult>;
+    return { accepted: body.accepted ?? 0, dropped: body.dropped ?? 0 };
+  } catch {
+    return undefined;
+  }
+}

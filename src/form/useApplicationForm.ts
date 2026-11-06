@@ -5,12 +5,24 @@ import {
   IntakeError,
   type ApplicationValues,
   type FieldErrors,
+  type EventSink,
   type FleegitalOptions,
   type IntakeConfig,
 } from "../shared/client.js";
 import { visitorId } from "../shared/visitor.js";
 
 export type FormState = "loading" | "ready" | "sending" | "sent" | "error";
+
+export interface UseApplicationFormOptions extends FleegitalOptions {
+  /**
+   * Where to report the three funnel steps: the form became usable, the
+   * applicant typed something, the application was accepted. Pass the object
+   * `createAnalytics()` returned. Without it the form reports nothing, and
+   * the funnel columns in Fleegital stay empty — the page view is recorded
+   * either way, by the analytics package, but a page view is not an attempt.
+   */
+  analytics?: EventSink;
+}
 
 /** The result of one submission, carrying the reason when it failed. */
 export type SubmitOutcome =
@@ -47,8 +59,8 @@ export interface UseApplicationForm {
  * The form without any markup, for carriers who want their own.
  * `ApplicationForm` is this hook plus a plain, unstyled layout.
  */
-export function useApplicationForm(options: FleegitalOptions): UseApplicationForm {
-  const { publishableKey, origin } = options;
+export function useApplicationForm(options: UseApplicationFormOptions): UseApplicationForm {
+  const { publishableKey, origin, analytics } = options;
   const [config, setConfig] = useState<IntakeConfig | null>(null);
   const [state, setState] = useState<FormState>("loading");
   const [values, setValues] = useState<ApplicationValues>({ first_name: "" });
@@ -58,6 +70,14 @@ export function useApplicationForm(options: FleegitalOptions): UseApplicationFor
   const [stale, setStale] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const honeypot = useRef("");
+  // Each step is reported once per mounted form. A re-render is not a new
+  // attempt, and a second keystroke is not a second start.
+  const reported = useRef({ view: false, start: false });
+  // Held in a ref so that passing a fresh object every render — which a
+  // caller doing `analytics={createAnalytics(...)}` inline would — does not
+  // re-run the effect below and report the form as viewed again.
+  const sink = useRef<EventSink | undefined>(analytics);
+  sink.current = analytics;
 
   useEffect(() => {
     const ac = new AbortController();
@@ -66,6 +86,12 @@ export function useApplicationForm(options: FleegitalOptions): UseApplicationFor
       .then((cfg) => {
         setConfig(cfg);
         setState("ready");
+        // Reported here rather than on mount: until the company's wording has
+        // loaded there is no form to have seen, only a spinner.
+        if (!reported.current.view) {
+          reported.current.view = true;
+          sink.current?.track("form_view");
+        }
       })
       .catch((e: unknown) => {
         if (ac.signal.aborted) return;
@@ -76,6 +102,10 @@ export function useApplicationForm(options: FleegitalOptions): UseApplicationFor
   }, [publishableKey, origin]);
 
   const setValue = useCallback<UseApplicationForm["setValue"]>((field, value) => {
+    if (!reported.current.start) {
+      reported.current.start = true;
+      sink.current?.track("form_start");
+    }
     setValues((v) => ({ ...v, [field]: value }));
     // A message about what the applicant just changed is already out of date.
     setErrors((e) => (e[field as string] ? { ...e, [field as string]: [] } : e));
@@ -99,6 +129,9 @@ export function useApplicationForm(options: FleegitalOptions): UseApplicationFor
         });
       setMessage(res.message);
       setState("sent");
+      // Only on acceptance. A rejected submission is not a submission, and
+      // counting it would make the funnel wider at the bottom than the top.
+      sink.current?.track("form_submit");
       return { ok: true, message: res.message };
     } catch (e: unknown) {
       setState("ready");
