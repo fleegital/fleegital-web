@@ -1,0 +1,32 @@
+name: Bug report
+description: Something in the package does not behave as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not put a publishable key, an applicant's details or any other
+        real personal data in this issue. It is a public repository.
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected instead
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: The smallest code that shows it
+      render: tsx
+  - type: input
+    id: env
+    attributes:
+      label: Framework and React version
+      placeholder: Next.js 15, React 18.3

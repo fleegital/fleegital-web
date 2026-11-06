@@ -1,0 +1,39 @@
+name: Publish
+
+# Tag a release and this publishes it. Nothing publishes from a branch, so a
+# merge can never reach a carrier's site on its own.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  # Lets npm attach provenance: proof that the tarball on npm was built from
+  # this commit in this repository, which a carrier can verify.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - name: The tag matches the version in package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::tag $tag does not match package version $pkg"
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

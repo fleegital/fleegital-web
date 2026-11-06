@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+      - name: The published entry points exist
+        run: |
+          for f in dist/form/index.js dist/form/index.d.ts; do
+            test -f "$f" || { echo "missing $f"; exit 1; }
+          done
+
+      # The reason this package has its own repository: a publish ships
+      # whatever `files` lets through, and a mistake in that field ships more.
+      # Here there is nothing else to ship, and this proves it every commit.
+      - name: The tarball carries nothing but dist and the documents
+        run: |
+          npm pack --silent > /dev/null
+          tar -tzf fleegital-web-*.tgz | sed 's|^package/||' | grep -v '/$' | sort | tee shipped.txt
+          if grep -qvE '^(dist/|README\.md$|CHANGELOG\.md$|LICENSE$|package\.json$)' shipped.txt; then
+            echo "::error::the tarball holds a file that is not dist or a document"
+            exit 1
+          fi

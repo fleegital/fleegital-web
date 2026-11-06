@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question about your own Fleegital account, keys or leads
+    url: https://www.fleegital.app
+    about: Anything about your company's data or settings belongs in the app, not in a public issue.
