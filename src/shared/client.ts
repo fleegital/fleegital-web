@@ -24,6 +24,30 @@ export interface FleegitalOptions {
   origin?: string;
 }
 
+/**
+ * One field of the application form, as the carrier configured it in
+ * Fleegital. The list is served with the rest of the config, which is why this
+ * package carries no field list of its own: a field that exists here is a
+ * field that reaches the driver's record, and a field that does not exist
+ * cannot be invented on the page and silently dropped.
+ */
+export interface IntakeFieldDef {
+  /** The name to send it under. Also the key in `values`. */
+  code: string;
+  inputType:
+    | "text" | "email" | "tel" | "number" | "date"
+    | "select" | "multiselect" | "checkbox" | "textarea";
+  label: string;
+  helpText: string | null;
+  required: boolean;
+  maxLength: number | null;
+  /** For select and multiselect: what to show, and what to store. */
+  options: { value: string; label: string }[] | null;
+}
+
+/** What one field can hold: text, a set of choices, or yes/no. */
+export type IntakeAnswer = string | string[] | boolean;
+
 /** What the form needs from the server before it can render. */
 export interface IntakeConfig {
   companyName: string | null;
@@ -33,6 +57,24 @@ export interface IntakeConfig {
   primaryColor: string | null;
   /** Already rewritten to our own domain by the server. */
   logoUrl: string | null;
+  /** The form, in display order, exactly as configured in Fleegital. */
+  fields: IntakeFieldDef[];
+  /** Echoed back on submit; a mismatch means the form changed under us. */
+  fieldsVersion: string;
+}
+
+/** The value a field starts at before anyone has touched it. */
+export function emptyAnswer(field: IntakeFieldDef): IntakeAnswer {
+  if (field.inputType === "checkbox") return false;
+  if (field.inputType === "multiselect") return [];
+  return "";
+}
+
+/** True when a required field has not been answered. */
+export function isBlank(field: IntakeFieldDef, value: IntakeAnswer | undefined): boolean {
+  if (field.inputType === "checkbox") return value !== true;
+  if (Array.isArray(value)) return value.length === 0;
+  return String(value ?? "").trim() === "";
 }
 
 /** A field-level rejection, as the endpoint reports it. */
@@ -75,27 +117,36 @@ export async function fetchIntakeConfig(
   });
   if (!res.ok) throw await readError(res);
   const cfg = (await res.json()) as Record<string, unknown>;
+  const raw = Array.isArray(cfg.fields) ? (cfg.fields as Record<string, unknown>[]) : [];
   return {
     companyName: (cfg.company_name as string | null) ?? null,
     consentText: String(cfg.consent_text ?? ""),
     consentVersion: String(cfg.consent_version ?? ""),
     primaryColor: (cfg.primary_color as string | null) ?? null,
     logoUrl: (cfg.logo_url as string | null) ?? null,
+    fields: raw.map((f) => ({
+      code: String(f.code),
+      inputType: (f.input_type as IntakeFieldDef["inputType"]) ?? "text",
+      label: String(f.label ?? f.code),
+      helpText: (f.help_text as string | null) ?? null,
+      required: f.required === true,
+      maxLength: typeof f.max_length === "number" ? f.max_length : null,
+      options: Array.isArray(f.options)
+        ? (f.options as { value: string; label: string }[])
+        : null,
+    })),
+    fieldsVersion: String(cfg.fields_version ?? ""),
   };
 }
 
-/** The answers one applicant gave. Every field is optional but first name. */
-export interface ApplicationValues {
-  first_name: string;
-  last_name?: string;
-  phone?: string;
-  email?: string;
-  cdl_class?: string;
-  experience_years?: string;
-  position?: string;
-  location?: string;
-  notes?: string;
-}
+/**
+ * The answers one applicant gave, keyed by field code.
+ *
+ * Deliberately not a fixed set of names. Which fields exist is the carrier's
+ * decision, taken in Fleegital, and `config.fields` says what they are — a
+ * name written in here would be a name that can drift from the form.
+ */
+export type ApplicationValues = Record<string, IntakeAnswer>;
 
 /**
  * What the endpoint tells a carrier's page, which is deliberately very little.
@@ -114,6 +165,8 @@ export interface SubmitArgs extends FleegitalOptions {
   values: ApplicationValues;
   consentGranted: boolean;
   consentVersion: string;
+  /** Echoed from the config, so a page open while the form changed is told. */
+  fieldsVersion?: string;
   /** Anonymous first-party id, so the lead can be traced to the first visit. */
   visitorId?: string | undefined;
   /** Spam trap: the value of a field a person never sees. Must stay empty. */
@@ -132,6 +185,7 @@ export async function submitApplication(args: SubmitArgs): Promise<SubmitResult>
       page_url: args.pageUrl ?? (typeof location === "undefined" ? undefined : location.href),
       company_website: args.honeypot ?? "",
       visitor_id: args.visitorId,
+      fields_version: args.fieldsVersion,
       consent: { granted: args.consentGranted, version: args.consentVersion },
       ...args.values,
     }),

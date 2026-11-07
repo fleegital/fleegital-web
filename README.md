@@ -25,8 +25,49 @@ import { ApplicationForm } from "@fleegital/web/form";
 />
 ```
 
-The package ships no stylesheet. The markup is plain elements with your
-`className` on the form, so your own CSS owns it.
+That is the whole integration. **Which fields the form asks for is not set
+here.** It is the form you configured in Fleegital, under the same Website
+applications settings as the key, and the component renders it — so adding a
+field, renaming one or making one required is a change you make in Fleegital,
+with no deploy and no code.
+
+This is deliberate. A field written into your own markup reaches nothing: the
+endpoint stores the answers to the fields the form actually has, so an invented
+one is dropped and nobody is told. The same applies to the spam trap, which is
+part of the form here rather than something your markup has to remember.
+
+### Styling
+
+The package ships no stylesheet, and every element carries a stable class:
+
+| class | element |
+| --- | --- |
+| `fga-form` | the `<form>` |
+| `fga-title` | "Drive for …" |
+| `fga-field`, `fga-field-<type>` | one field's wrapper (`fga-field-select`, `fga-field-checkbox`, …) |
+| `fga-label`, `fga-optional` | its label, and the "(optional)" marker |
+| `fga-input`, `fga-textarea`, `fga-select`, `fga-checkbox` | the control |
+| `fga-options`, `fga-option` | a multiple-choice field's list |
+| `fga-help`, `fga-error` | the hint, and the message for that field |
+| `fga-consent` | the consent checkbox and its wording |
+| `fga-alert` | a message about the whole form |
+| `fga-submit` | the button |
+
+```css
+.fga-field { margin-bottom: 12px; }
+.fga-input, .fga-select, .fga-textarea { width: 100%; }
+.fga-error { color: #b00020; font-size: 12px; }
+```
+
+For CSS-in-JS and utility frameworks, where the class name is generated, pass
+`classNames` and it is added alongside the `fga-…` one:
+
+```tsx
+<ApplicationForm
+  publishableKey="pk_live_…"
+  classNames={{ input: "rounded border px-3 py-2", submit: "btn btn-primary" }}
+/>
+```
 
 ### Your own markup
 
@@ -43,8 +84,18 @@ if (f.state === "sent") return <p>{f.message}</p>;
   const res = await f.submit();
   if (!res.ok) showError(res.error);
 }}>
-  <input value={f.values.first_name} onChange={(e) => f.setValue("first_name", e.target.value)} />
-  {f.errors.first_name?.[0] && <small>{f.errors.first_name[0]}</small>}
+  {/* The fields your Fleegital settings say this form has. */}
+  {f.fields.map((field) => (
+    <div key={field.code}>
+      <label htmlFor={field.code}>{field.label}{field.required ? " *" : ""}</label>
+      <input
+        id={field.code}
+        value={String(f.values[field.code] ?? "")}
+        onChange={(e) => f.setValue(field.code, e.target.value)}
+      />
+      {f.errors[field.code]?.[0] && <small>{f.errors[field.code][0]}</small>}
+    </div>
+  ))}
 
   <label>
     <input type="checkbox" checked={f.consentGranted}
@@ -54,12 +105,22 @@ if (f.state === "sent") return <p>{f.message}</p>;
 
   {/* A field no person sees. Leave it in: it is how bots are caught. */}
   <input {...f.honeypotProps} tabIndex={-1} aria-hidden style={{ position: "absolute", left: -10000 }} />
+
+  <button type="submit" disabled={f.incomplete || f.state === "sending"}>Apply</button>
 </form>
 ```
 
-`f.config` carries the company name, the consent wording and version, the brand
-colour and the logo — all from your Fleegital settings, so changing them there
-changes the form without a deploy.
+Each field carries `code`, `inputType` (`text`, `email`, `tel`, `number`,
+`date`, `select`, `multiselect`, `checkbox`, `textarea`), `label`, `helpText`,
+`required`, `maxLength` and, for the two choice types, `options` of
+`{ value, label }` — the value is what gets stored, so a dropdown writes `A`
+and shows "Class A". A checkbox answer is a boolean and a multiple-choice
+answer is an array of values; everything else is a string. `emptyAnswer(field)`
+and `isBlank(field, value)` are exported if you want them.
+
+`f.config` also carries the company name, the consent wording and version, the
+brand colour and the logo — all from your Fleegital settings, so changing them
+there changes the form without a deploy.
 
 ## Website analytics
 
@@ -138,14 +199,18 @@ when the tab closes; everything before it is already gone.
   from. Anonymous, `localStorage` only, no cookie, nothing to a third party, and
   silently skipped where storage is blocked.
 - **Catches bots** with the honeypot field, without a CAPTCHA.
+- **Only asks for what it can keep.** Every field comes from your Fleegital
+  settings and writes to a column on the driver's record, so there is no way to
+  collect an answer that quietly goes nowhere.
 
 ## Outcomes
 
 `submit()` resolves to `{ ok: true, message }` or
 `{ ok: false, error, fields?, stale }`.
 
-`stale` means your consent wording changed in Fleegital while the page was open:
-reload it. `fields` carries per-field messages, keyed by field name.
+`stale` means the form changed in Fleegital while the page was open — the
+consent wording or the fields themselves: reload it. `fields` carries per-field
+messages, keyed by field code.
 
 Accepted applications, ones held for review and ones that tripped the spam trap
 all get the same answer, deliberately — a submitter cannot learn which happened.
@@ -161,7 +226,9 @@ thing it stores is the anonymous visit id above.
 
 This runs on your website, so a change here can break your site. Versions
 follow semver strictly: anything that changes what an existing call does gets a
-major. Pin the major and read [CHANGELOG.md](CHANGELOG.md) before moving it.
+major — and before 1.0, the minor is that major. Pin the minor
+(`"@fleegital/web": "~0.2.0"`) and read [CHANGELOG.md](CHANGELOG.md) before
+moving it.
 
 Published builds carry [npm provenance](https://docs.npmjs.com/generating-provenance-statements),
 so you can verify the tarball you installed was built from a commit in this
