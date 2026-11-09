@@ -84,6 +84,11 @@ export function ApplicationForm(props: ApplicationFormProps) {
 
   const field = (d: IntakeFieldDef) => {
     const id = `fga-${d.code}`;
+    // Two classes nothing in this file acts on, for your stylesheet to act on:
+    // which field this is, and how wide the carrier made it. Both come from
+    // Fleegital, so a rule written against them survives a field being moved —
+    // a rule written against position does not.
+    const w = `fga-code-${d.code} fga-width-${d.width === "half" ? "half" : "full"}`;
     const errs = f.errors[d.code] ?? [];
     const value: IntakeAnswer = f.values[d.code] ?? (d.inputType === "checkbox" ? false : d.inputType === "multiselect" ? [] : "");
     const described = [d.helpText ? `${id}-help` : null, errs.length ? `${id}-error` : null].filter(Boolean).join(" ");
@@ -109,7 +114,7 @@ export function ApplicationForm(props: ApplicationFormProps) {
 
     if (d.inputType === "checkbox") {
       return (
-        <div key={d.code} className={cx("fga-field", "fga-field-checkbox", cn.field)}>
+        <div key={d.code} className={cx("fga-field", "fga-field-checkbox", w, cn.field)}>
           <input {...common} type="checkbox" className={cx("fga-checkbox", cn.checkbox)}
             checked={value === true}
             onChange={(e) => f.setValue(d.code, e.target.checked)} />
@@ -121,7 +126,7 @@ export function ApplicationForm(props: ApplicationFormProps) {
 
     if (d.inputType === "select") {
       return (
-        <div key={d.code} className={cx("fga-field", "fga-field-select", cn.field)}>
+        <div key={d.code} className={cx("fga-field", "fga-field-select", w, cn.field)}>
           {label}
           <select {...common} className={cx("fga-select", cn.select)}
             value={typeof value === "string" ? value : ""}
@@ -137,7 +142,7 @@ export function ApplicationForm(props: ApplicationFormProps) {
     if (d.inputType === "multiselect") {
       const picked = Array.isArray(value) ? value : [];
       return (
-        <div key={d.code} className={cx("fga-field", "fga-field-multiselect", cn.field)}>
+        <div key={d.code} className={cx("fga-field", "fga-field-multiselect", w, cn.field)}>
           <span className={cx("fga-label", cn.label)}>
             {d.label}
             {!d.required && <span className={cx("fga-optional", cn.required)}> ({optionalLabel})</span>}
@@ -161,7 +166,7 @@ export function ApplicationForm(props: ApplicationFormProps) {
 
     if (d.inputType === "textarea") {
       return (
-        <div key={d.code} className={cx("fga-field", "fga-field-textarea", cn.field)}>
+        <div key={d.code} className={cx("fga-field", "fga-field-textarea", w, cn.field)}>
           {label}
           <textarea {...common} className={cx("fga-textarea", cn.textarea)} rows={3}
             maxLength={d.maxLength ?? undefined}
@@ -175,7 +180,7 @@ export function ApplicationForm(props: ApplicationFormProps) {
     // text, email, tel, number, date. `number` is sent as a typed text input:
     // a spinner on "years driving" invites 1e3, and the server reads digits.
     return (
-      <div key={d.code} className={cx("fga-field", `fga-field-${d.inputType}`, cn.field)}>
+      <div key={d.code} className={cx("fga-field", `fga-field-${d.inputType}`, w, cn.field)}>
         {label}
         <input {...common} className={cx("fga-input", cn.input)}
           type={d.inputType === "number" ? "text" : d.inputType}

@@ -45,6 +45,8 @@ The package ships no stylesheet, and every element carries a stable class:
 | `fga-form` | the `<form>` |
 | `fga-title` | "Drive for …" |
 | `fga-field`, `fga-field-<type>` | one field's wrapper (`fga-field-select`, `fga-field-checkbox`, …) |
+| `fga-code-<code>` | which field it is (`fga-code-phone`), whatever its position |
+| `fga-width-half`, `fga-width-full` | how wide you made it in Fleegital |
 | `fga-label`, `fga-optional` | its label, and the "(optional)" marker |
 | `fga-input`, `fga-textarea`, `fga-select`, `fga-checkbox` | the control |
 | `fga-options`, `fga-option` | a multiple-choice field's list |
@@ -59,15 +61,38 @@ The package ships no stylesheet, and every element carries a stable class:
 .fga-error { color: #b00020; font-size: 12px; }
 ```
 
-For CSS-in-JS and utility frameworks, where the class name is generated, pass
-`classNames` and it is added alongside the `fga-…` one:
+### Two fields on a row
 
-```tsx
-<ApplicationForm
-  publishableKey="pk_live_…"
-  classNames={{ input: "rounded border px-3 py-2", submit: "btn btn-primary" }}
-/>
+Which fields share a row is set per field in Fleegital, not written into your
+CSS, and arrives as `fga-width-half`. One rule turns it on:
+
+```css
+@media (min-width: 640px) {
+  .fga-form { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+  .fga-form > * { grid-column: 1 / -1; }
+  .fga-form > .fga-width-half { grid-column: span 1; }
+}
 ```
+
+If the form sits in a column narrower than the page — a sidebar, a modal —
+ask the space it was given rather than the screen. The container has to be the
+element around the form, not the form: a container query asks an ancestor, so
+an element that declares itself one never matches its own rule.
+
+```css
+.my-apply-slot { container-type: inline-size; }
+
+@container (min-width: 460px) {
+  .fga-form { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+  .fga-form > * { grid-column: 1 / -1; }
+  .fga-form > .fga-width-half { grid-column: span 1; }
+}
+```
+
+Do not write the layout as "the first four fields". It works until someone
+reorders the form in Fleegital — which the field editor exists to let them do —
+and then the pairs silently follow the new positions. `fga-width-half` and
+`fga-code-<code>` both survive a reorder; `:nth-of-type` does not.
 
 ### Your own markup
 
@@ -112,9 +137,9 @@ if (f.state === "sent") return <p>{f.message}</p>;
 
 Each field carries `code`, `inputType` (`text`, `email`, `tel`, `number`,
 `date`, `select`, `multiselect`, `checkbox`, `textarea`), `label`, `helpText`,
-`required`, `maxLength` and, for the two choice types, `options` of
-`{ value, label }` — the value is what gets stored, so a dropdown writes `A`
-and shows "Class A". A checkbox answer is a boolean and a multiple-choice
+`required`, `maxLength`, `width` (`"full"` or `"half"`) and, for the two choice
+types, `options` of `{ value, label }` — the value is what gets stored, so a
+dropdown writes `A` and shows "Class A". A checkbox answer is a boolean and a multiple-choice
 answer is an array of values; everything else is a string. `emptyAnswer(field)`
 and `isBlank(field, value)` are exported if you want them.
 

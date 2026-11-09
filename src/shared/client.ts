@@ -43,6 +43,12 @@ export interface IntakeFieldDef {
   maxLength: number | null;
   /** For select and multiselect: what to show, and what to store. */
   options: { value: string; label: string }[] | null;
+  /**
+   * How much of a row this field takes where there is room for two, as the
+   * carrier set it in Fleegital. Rendered as a class; the package still ships
+   * no CSS, so a form stays one column until a rule of yours says otherwise.
+   */
+  width: "full" | "half";
 }
 
 /** What one field can hold: text, a set of choices, or yes/no. */
@@ -134,6 +140,7 @@ export async function fetchIntakeConfig(
       options: Array.isArray(f.options)
         ? (f.options as { value: string; label: string }[])
         : null,
+      width: f.width === "half" ? "half" : "full",
     })),
     fieldsVersion: String(cfg.fields_version ?? ""),
   };

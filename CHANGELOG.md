@@ -4,6 +4,30 @@ This package runs on carriers' own websites, so a breaking change here breaks
 someone else's site. Versions follow semver strictly, and anything that changes
 what an existing call does gets a major.
 
+## 0.3.0
+
+Additive: nothing you call changes, and no markup you style disappears.
+
+### Added
+- **`fga-width-half` / `fga-width-full` on every field**, from a new per-field
+  setting in Fleegital. Which fields share a row is now part of the form, next
+  to their order and wording, so the same pairing appears on the hosted
+  application page, in the embedded script and here.
+
+  The package still ships no CSS. One rule in yours turns it on — the README
+  has it, using a container query so a form in a sidebar stays one column
+  without a second breakpoint.
+
+- **`fga-code-<code>` on every field**, so a rule can name the field it means.
+
+  Both exist because of a real failure: a carrier styled the first four fields
+  two-up with `:nth-of-type(-n+4)`, which was correct until the field editor
+  shipped. Moving one field in Fleegital re-paired the columns and pushed Email
+  to full width, with nobody touching the stylesheet. A rule about positions
+  cannot survive a form whose order is a setting.
+
+- `width` on `IntakeFieldDef`, for your own markup.
+
 ## 0.2.0
 
 Before 1.0 the minor is the major: this changes what existing calls do. The
