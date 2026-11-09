@@ -1,0 +1,32 @@
+/*
+ * @fleegital/web/layout.css — columns, and nothing else.
+ *
+ * `fga-width-half` says a field may share a row. On its own it says it to
+ * nobody: a class is inert until some stylesheet turns it into a column, and
+ * this package ships no CSS unless you ask for it. This is the smallest ask —
+ * no colours, no fonts, no borders, no spacing beyond the gap between fields.
+ * Import it when the form should keep your own look and only learn to pair.
+ *
+ * Which fields pair is set per field in Fleegital, not here, so this file
+ * never needs to know a field's name.
+ */
+
+.fga-form {
+  display: grid;
+  gap: var(--fga-gap, 1rem);
+}
+
+/* One column until there is room for two. If the form sits in a column
+   narrower than the page — a sidebar, a modal — put
+   `container-type: inline-size` on the element around it and swap this for
+   `@container (min-width: 460px)`; the rules inside are identical. The
+   container has to be that wrapper, never the form: a container query asks an
+   ancestor, so an element that declares itself one never matches its own rule. */
+@media (min-width: 640px) {
+  .fga-form {
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--fga-column-gap, 1rem);
+  }
+  .fga-form > * { grid-column: 1 / -1; }
+  .fga-form > .fga-width-half { grid-column: span 1; }
+}

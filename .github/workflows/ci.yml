@@ -21,7 +21,8 @@ jobs:
       - name: The published entry points exist
         run: |
           for f in dist/form/index.js dist/form/index.d.ts \
-                   dist/analytics/index.js dist/analytics/index.d.ts; do
+                   dist/analytics/index.js dist/analytics/index.d.ts \
+                   dist/styles/layout.css dist/styles/form.css; do
             test -f "$f" || { echo "missing $f"; exit 1; }
           done
 

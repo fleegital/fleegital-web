@@ -1,0 +1,140 @@
+/*
+ * @fleegital/web/form.css — a form that looks finished out of the box.
+ *
+ * Opt-in: importing nothing is still the default, and the package still ships
+ * no CSS to anyone who does not ask. Import this when you want a presentable
+ * form now and would rather not write one.
+ *
+ * It is deliberately colourless. Text, background and borders are derived from
+ * whatever your page already sets — `currentColor` mixed down for borders,
+ * transparent fields — so it reads correctly on a light page and on a dark one
+ * without a theme switch. The one real colour is the submit button, and that
+ * comes from the carrier's brand colour in Fleegital, which the component sets
+ * as --fga-primary. Everything else is a variable you can override.
+ */
+
+@import "./layout.css";
+
+.fga-form {
+  --fga-radius: 0.5rem;
+  --fga-border: color-mix(in srgb, currentColor 22%, transparent);
+  --fga-muted: color-mix(in srgb, currentColor 62%, transparent);
+  --fga-danger: #b3261e;
+  --fga-field-padding: 0.6rem 0.7rem;
+  font: inherit;
+  color: inherit;
+}
+
+.fga-title {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  line-height: 1.3;
+}
+
+.fga-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.fga-optional {
+  font-weight: 400;
+  color: var(--fga-muted);
+}
+
+.fga-input,
+.fga-select,
+.fga-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--fga-field-padding);
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--fga-border);
+  border-radius: var(--fga-radius);
+}
+
+.fga-textarea { resize: vertical; min-height: 5rem; }
+
+.fga-input:focus-visible,
+.fga-select:focus-visible,
+.fga-textarea:focus-visible,
+.fga-checkbox:focus-visible,
+.fga-submit:focus-visible {
+  outline: 2px solid var(--fga-primary, currentColor);
+  outline-offset: 2px;
+}
+
+/* A field the endpoint refused says so where the applicant is looking. */
+.fga-input[aria-invalid],
+.fga-select[aria-invalid],
+.fga-textarea[aria-invalid] {
+  border-color: var(--fga-danger);
+}
+
+.fga-help,
+.fga-error {
+  margin: 0.3rem 0 0;
+  font-size: 0.8125rem;
+}
+.fga-help { color: var(--fga-muted); }
+.fga-error { color: var(--fga-danger); }
+
+.fga-checkbox {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--fga-primary, currentColor);
+  flex: none;
+}
+
+/* A yes/no field, a list of choices, and the consent line all read as a row
+   of control-then-words rather than a label stacked over a box. */
+.fga-field-checkbox,
+.fga-option,
+.fga-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.fga-field-checkbox .fga-label,
+.fga-option,
+.fga-consent .fga-label {
+  margin-bottom: 0;
+  font-weight: 400;
+}
+
+.fga-options { display: grid; gap: 0.4rem; margin-top: 0.35rem; }
+.fga-option { cursor: pointer; }
+
+.fga-consent .fga-label {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--fga-muted);
+}
+
+.fga-alert {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--fga-danger);
+}
+
+.fga-submit {
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--fga-primary, #1f3a5f);
+  border: 0;
+  border-radius: var(--fga-radius);
+  cursor: pointer;
+}
+
+.fga-submit:disabled { opacity: 0.55; cursor: default; }
+.fga-submit:not(:disabled):hover { filter: brightness(1.07); }
+
+.fga-loading,
+.fga-sent { font: inherit; color: inherit; }

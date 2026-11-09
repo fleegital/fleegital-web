@@ -38,7 +38,47 @@ part of the form here rather than something your markup has to remember.
 
 ### Styling
 
-The package ships no stylesheet, and every element carries a stable class:
+Three levels. Pick one; none of them is forced on you.
+
+**1. Nothing.** Import no stylesheet and the package ships no CSS at all. Every
+element carries a stable class and the form is yours to style.
+
+**2. Columns only.**
+
+```ts
+import "@fleegital/web/layout.css";
+```
+
+Fifteen lines: a grid on the form, and `fga-width-half` becomes a column. No
+colours, no fonts, no borders — your design still owns the look. Import this if
+you style the form yourself, because `fga-width-half` is inert until some
+stylesheet turns it into a column.
+
+**3. A finished form.**
+
+```ts
+import "@fleegital/web/form.css";
+```
+
+Columns plus a presentable default: spacing, labels, fields, the consent line,
+the button. It is deliberately colourless — text, borders and muted text are
+derived from whatever your page already sets, so it reads correctly on a light
+page and on a dark one without a theme switch. The one real colour is the
+submit button, and that comes from your brand colour in Fleegital.
+
+Everything is a custom property, so you can keep the stylesheet and change it:
+
+```css
+.fga-form {
+  --fga-primary: #c2410c;   /* overrides the brand colour from Fleegital */
+  --fga-radius: 0;
+  --fga-gap: 1.5rem;
+  --fga-border: #d8dee9;
+  --fga-danger: #b00020;
+}
+```
+
+#### The classes
 
 | class | element |
 | --- | --- |
@@ -55,16 +95,23 @@ The package ships no stylesheet, and every element carries a stable class:
 | `fga-alert` | a message about the whole form |
 | `fga-submit` | the button |
 
-```css
-.fga-field { margin-bottom: 12px; }
-.fga-input, .fga-select, .fga-textarea { width: 100%; }
-.fga-error { color: #b00020; font-size: 12px; }
+For CSS-in-JS and utility frameworks, where the class name is generated, pass
+`classNames` and it is added alongside the `fga-…` one:
+
+```tsx
+<ApplicationForm
+  publishableKey="pk_live_…"
+  classNames={{ input: "rounded border px-3 py-2", submit: "btn btn-primary" }}
+/>
 ```
 
 ### Two fields on a row
 
 Which fields share a row is set per field in Fleegital, not written into your
-CSS, and arrives as `fga-width-half`. One rule turns it on:
+CSS, and arrives as `fga-width-half`. Either stylesheet above turns it into a
+column at 640px and up.
+
+Writing it yourself is four lines:
 
 ```css
 @media (min-width: 640px) {
@@ -74,19 +121,14 @@ CSS, and arrives as `fga-width-half`. One rule turns it on:
 }
 ```
 
-If the form sits in a column narrower than the page — a sidebar, a modal —
-ask the space it was given rather than the screen. The container has to be the
+If the form sits in a column narrower than the page — a sidebar, a modal — ask
+the space it was given rather than the screen. The container has to be the
 element around the form, not the form: a container query asks an ancestor, so
 an element that declares itself one never matches its own rule.
 
 ```css
 .my-apply-slot { container-type: inline-size; }
-
-@container (min-width: 460px) {
-  .fga-form { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
-  .fga-form > * { grid-column: 1 / -1; }
-  .fga-form > .fga-width-half { grid-column: span 1; }
-}
+@container (min-width: 460px) { /* the same three rules */ }
 ```
 
 Do not write the layout as "the first four fields". It works until someone

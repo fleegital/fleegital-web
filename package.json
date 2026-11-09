@@ -1,6 +1,6 @@
 {
   "name": "@fleegital/web",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The driver application form and website analytics for carriers running Fleegital.",
   "license": "MIT",
   "author": "Fleegital",
@@ -37,6 +37,8 @@
       "types": "./dist/analytics/index.d.ts",
       "import": "./dist/analytics/index.js"
     },
+    "./layout.css": "./dist/styles/layout.css",
+    "./form.css": "./dist/styles/form.css",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -44,7 +46,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/copy-styles.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prepublishOnly": "npm run build"
   },

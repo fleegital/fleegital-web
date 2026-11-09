@@ -4,6 +4,33 @@ This package runs on carriers' own websites, so a breaking change here breaks
 someone else's site. Versions follow semver strictly, and anything that changes
 what an existing call does gets a major.
 
+## 0.4.0
+
+Additive. Importing nothing still ships no CSS.
+
+### Added
+- **`@fleegital/web/form.css`** — a form that looks finished out of the box:
+  spacing, labels, fields, choices, the consent line, the button. Colourless on
+  purpose — text, borders and muted text derive from whatever the page already
+  sets, so it reads correctly on a light page and on a dark one with no theme
+  switch. Every value is a custom property (`--fga-primary`, `--fga-radius`,
+  `--fga-gap`, `--fga-border`, `--fga-danger`) so the stylesheet can be kept and
+  changed rather than replaced.
+- **`@fleegital/web/layout.css`** — the columns alone: a grid on the form and
+  nothing else, for carriers who style the rest themselves.
+- **The submit button takes the carrier's brand colour.** The component sets
+  `--fga-primary` from `config.primaryColor`, which the package has fetched
+  since 0.1.0 and never used. It comes from Fleegital, so it cannot drift from
+  the colour the app shows.
+
+### Why
+
+0.3.0 shipped `fga-width-half` and no way to make it mean anything. A class is
+inert until some stylesheet turns it into a column, so every carrier who wanted
+two fields on a row had to write the grid themselves — and the first one who
+did wrote it against positions, which is the fault 0.3.0 existed to fix. The
+grid now ships as something you can import, at the level you want.
+
 ## 0.3.0
 
 Additive: nothing you call changes, and no markup you style disappears.

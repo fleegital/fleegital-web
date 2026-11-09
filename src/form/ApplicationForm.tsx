@@ -193,9 +193,23 @@ export function ApplicationForm(props: ApplicationFormProps) {
     );
   };
 
+  /*
+   * The carrier's brand colour, as a custom property rather than a prop.
+   *
+   * It already travels with the rest of the config — the package has fetched
+   * it since 0.1.0 and never used it. Setting it here means the optional
+   * stylesheets colour the button from Fleegital, and a carrier who styles the
+   * form themselves can read `--fga-primary` instead of typing the hex a
+   * second time where it can drift from the app.
+   */
+  const brand = f.config?.primaryColor
+    ? ({ "--fga-primary": f.config.primaryColor } as CSSProperties)
+    : undefined;
+
   return (
     <form
       className={cx("fga-form", className, cn.form)}
+      style={brand}
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
