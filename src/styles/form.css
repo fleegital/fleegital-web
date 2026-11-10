@@ -25,6 +25,12 @@
   color: inherit;
 }
 
+/* Belt and braces for the rule in layout.css: if a field is ever given height
+   it did not ask for — a carrier sets one, or puts `align-items: stretch`
+   back on the form — it stacks from the top instead of sharing the extra out
+   among its rows, which is what moved and stretched the control. */
+.fga-field { align-content: start; }
+
 .fga-title {
   margin: 0 0 0.25rem;
   font-size: 1.25rem;

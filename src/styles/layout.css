@@ -14,6 +14,17 @@
 .fga-form {
   display: grid;
   gap: var(--fga-gap, 1rem);
+  /* A field is as tall as what is in it, never as tall as the row.
+
+     A grid item stretches to its row by default, and a row is as tall as its
+     tallest field — so the moment one field in a row carries a help line or an
+     error, its neighbour is handed that extra height. A field that is a plain
+     block ignores the gift and nothing moves. A field the carrier styled as a
+     grid or a flex column does not: the leftover is shared out among its own
+     rows, which pushes the input down and stretches it taller than the input
+     beside it. Measured on a real form: 7px down and 6px taller for an input,
+     13 and 11 for a select. `start` means there is no leftover to share. */
+  align-items: start;
 }
 
 /* One column until there is room for two. If the form sits in a column

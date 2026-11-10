@@ -115,11 +115,19 @@ Writing it yourself is four lines:
 
 ```css
 @media (min-width: 640px) {
-  .fga-form { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; }
+  .fga-form { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; align-items: start; }
   .fga-form > * { grid-column: 1 / -1; }
   .fga-form > .fga-width-half { grid-column: span 1; }
 }
 ```
+
+Keep `align-items: start`. Without it a grid item stretches to its row, and a
+row is as tall as its tallest field — so a field carrying an error or a help
+line hands that extra height to the field beside it. A field that is a plain
+block ignores it. A field you styled as a grid or a flex column shares the
+extra out among its own rows, which moves the input down and stretches it
+taller than the one next to it, which is exactly the ragged row you were
+trying to avoid.
 
 If the form sits in a column narrower than the page — a sidebar, a modal — ask
 the space it was given rather than the screen. The container has to be the

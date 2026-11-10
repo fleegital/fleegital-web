@@ -4,6 +4,28 @@ This package runs on carriers' own websites, so a breaking change here breaks
 someone else's site. Versions follow semver strictly, and anything that changes
 what an existing call does gets a major.
 
+## 0.4.1
+
+A fix to the two optional stylesheets. No API change, no markup change.
+
+### Fixed
+- **A field no longer gets a taller box than its content.** `.fga-form` now
+  sets `align-items: start`, and `form.css` gives `.fga-field` an
+  `align-content: start` for the case where a field is given height anyway.
+
+  A grid item stretches to its row by default, and a row is as tall as its
+  tallest field, so a field carrying a help line or a validation error handed
+  that extra height to the field beside it. A field that is a plain block
+  ignored it and nothing moved — which is why the package's own markup looked
+  right. A field styled as a grid or a flex column did not: the leftover was
+  shared out among its own rows, pushing the input down and stretching it
+  taller than the input next to it. On a real carrier form that was 7px down
+  and 6px taller for an email input, 13 and 11 for a select, on every row
+  where one field had an error and the other did not.
+
+  The same line is now in the hand-written snippet in the README, which is
+  where the affected form got its grid.
+
 ## 0.4.0
 
 Additive. Importing nothing still ships no CSS.

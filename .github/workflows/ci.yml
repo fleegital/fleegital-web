@@ -26,6 +26,17 @@ jobs:
             test -f "$f" || { echo "missing $f"; exit 1; }
           done
 
+      # 0.4.1 exists because a field stretched to its row moved and grew the
+      # control inside it wherever the carrier styled the field as a grid or a
+      # flex column. What prevents it is one declaration in each stylesheet,
+      # which is exactly the kind of line a later edit drops without noticing.
+      - name: A field is never stretched to its row
+        run: |
+          grep -q 'align-items: start' dist/styles/layout.css \
+            || { echo "::error::layout.css lost align-items: start"; exit 1; }
+          grep -q 'align-content: start' dist/styles/form.css \
+            || { echo "::error::form.css lost the .fga-field guard"; exit 1; }
+
       # The reason this package has its own repository: a publish ships
       # whatever `files` lets through, and a mistake in that field ships more.
       # Here there is nothing else to ship, and this proves it every commit.
